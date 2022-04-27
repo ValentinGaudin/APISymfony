@@ -10,7 +10,7 @@ use App\Service\APISerializer;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/api', name: 'api_')]
-class APIController extends AbstractController
+class ContactController extends AbstractController
 {
     public function __construct(
         ContactRepository $contactRepository,
@@ -24,8 +24,7 @@ class APIController extends AbstractController
     public function index(): Response
     {
         return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/APIController.php',
+            'message' => 'Contact Controller',
         ]);
     }
 
@@ -45,5 +44,11 @@ class APIController extends AbstractController
         $data = $this->APISerializer->toJSON($contact);
 
         return $this->APISerializer->response($data);
+    }
+
+    #[Route('/contact', name:'create_new', methods: 'POST')]
+    public function createNewContact()
+    {
+        
     }
 }
