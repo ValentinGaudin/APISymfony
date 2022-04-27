@@ -17,5 +17,4 @@ class APIController extends AbstractController
             'path' => 'src/Controller/APIController.php',
         ]);
     }
-
 }
