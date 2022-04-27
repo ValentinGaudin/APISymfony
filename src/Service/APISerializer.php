@@ -31,17 +31,17 @@ class APISerializer
 
     protected function serializer()
     {
-        return $serializer = new Serializer($this->getNormalizers(), $this->getEncoder());
+        return new Serializer($this->getNormalizers(), $this->getEncoder());
     }
 
     protected function getEncoder()
     {
-        return $encoders = [new JsonEncoder()];
+        return [new JsonEncoder()];
     }
 
-    protected function getNormalizers() 
+    protected function getNormalizers()
     {
-        return $normalizers = [new ObjectNormalizer()];
+        return [new ObjectNormalizer()];
     }
 
 }

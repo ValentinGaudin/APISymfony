@@ -7,10 +7,19 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Service\APISerializer;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/api', name: 'api_')]
 class APIController extends AbstractController
 {
+    public function __construct(
+        ContactRepository $contactRepository,
+        APISerializer $APISerializer
+    ){
+        $this->contactRepository = $contactRepository;
+        $this->APISerializer = $APISerializer;
+    }
+
     #[Route('/', name: 'index', methods: 'GET')]
     public function index(): Response
     {
@@ -21,14 +30,20 @@ class APIController extends AbstractController
     }
 
     #[Route('/contacts', name: 'all_contacts', methods: 'GET')]
-    public function getAllContacts(ContactRepository $contactRepository, APISerializer $APISerializer): Response
+    public function getAllContacts(): Response
     {
-        $contacts = $contactRepository->findAll();
+        $contacts = $this->contactRepository->apiFindAll();
+        $data = $this->APISerializer->toJSON($contacts);
 
-        $data = $APISerializer->toJSON($contacts);
-
-        return $APISerializer->response($data);
-
+        return $this->APISerializer->response($data);
     }
 
+    #[Route('/contact/{id}', requirements: ['id' => '\d+'], name:'get_one_by_id', methods: 'GET')]
+    public function getOneContact(int $id)
+    {
+        $contact = $this->contactRepository->find($id);
+        $data = $this->APISerializer->toJSON($contact);
+
+        return $this->APISerializer->response($data);
+    }
 }
