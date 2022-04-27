@@ -29,6 +29,9 @@ class Contact
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
     #[Assert\Unique]
+    #[Assert\Email(
+        message: 'The email {{ value }} is not a valid email.',
+    )]
     private $mail;
 
     #[ORM\Column(type: 'string', length: 255)]

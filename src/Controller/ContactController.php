@@ -8,9 +8,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Service\APISerializer;
-use App\Service\CleanData;
+use App\Service\DataMethod;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Doctrine\Persistence\ManagerRegistry as PersistenceManagerRegistry;
 
 #[Route('/api', name: 'api_')]
 class ContactController extends AbstractController
@@ -50,26 +51,30 @@ class ContactController extends AbstractController
     }
 
     #[Route('/contact', name: 'create_new_contact', methods: 'POST')]
-    public function createNewContact(Request $request, CleanData $cleanData, EntityManagerInterface $entityManager): Response
-    {
+    public function createNewContact(
+        Request $request,
+        DataMethod $dataMethod,
+        EntityManagerInterface $entityManager,
+        PersistenceManagerRegistry $doctrine,
+            ): Response {
+
+        $contact = New Contact();
         
-            $contact = New Contact();
+        $informations = $dataMethod->getData($request);
+        $dataIsClean = $dataMethod->cleanData($informations);
 
-            $data = json_decode($request->getContent());
-            $dataIsClean = $cleanData->cleanData($data);
+        $contact->setFirstname($dataIsClean['firstname']);
+        $contact->setLastname($dataIsClean['lastname']);
+        $contact->setAdress($dataIsClean['adress']);
+        $contact->setPhone($dataIsClean['phone']);
+        $contact->setMail($dataIsClean['mail']);
+        $contact->setAge($dataIsClean['age']);
 
-            $contact->setFirstname($dataIsClean['firstname']);
-            $contact->setLastname($dataIsClean['lastname']);
-            $contact->setAdress($dataIsClean['adress']);
-            $contact->setPhone($dataIsClean['phone']);
-            $contact->setMail($dataIsClean['mail']);
-            $contact->setAge($dataIsClean['age']);
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($contact);
+        $entityManager->flush();
 
-            $entityManager->persist($contact);
-            $entityManager->flush();
-
-            return new Response('Your new contact has been added', 201);
-        
-        return new Response('An error has been occured', 404);
+        return new Response('Your new contact has been added', 201);
     }
+
 }
