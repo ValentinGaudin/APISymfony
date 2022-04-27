@@ -6,6 +6,7 @@ use App\Repository\ContactRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\APISerializer;
 
 #[Route('/api', name: 'api_')]
 class APIController extends AbstractController
@@ -20,13 +21,14 @@ class APIController extends AbstractController
     }
 
     #[Route('/contacts', name: 'all_contacts', methods: 'GET')]
-    public function getAllContacts(ContactRepository $contactRepository): Response
+    public function getAllContacts(ContactRepository $contactRepository, APISerializer $APISerializer): Response
     {
         $contacts = $contactRepository->findAll();
 
-        return $this->json([
-            'message' => 'Get all contacts from database',
-            'contacts' => $contacts
-        ]);
+        $data = $APISerializer->toJSON($contacts);
+
+        return $APISerializer->response($data);
+
     }
+
 }
