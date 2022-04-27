@@ -2,12 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Contact;
 use App\Repository\ContactRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Service\APISerializer;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\CleanData;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 #[Route('/api', name: 'api_')]
 class ContactController extends AbstractController
@@ -15,7 +18,7 @@ class ContactController extends AbstractController
     public function __construct(
         ContactRepository $contactRepository,
         APISerializer $APISerializer
-    ){
+    ) {
         $this->contactRepository = $contactRepository;
         $this->APISerializer = $APISerializer;
     }
@@ -28,7 +31,7 @@ class ContactController extends AbstractController
         ]);
     }
 
-    #[Route('/contacts', name: 'all_contacts', methods: 'GET')]
+    #[Route('/contacts', name: 'get_all_contacts', methods: 'GET')]
     public function getAllContacts(): Response
     {
         $contacts = $this->contactRepository->apiFindAll();
@@ -37,7 +40,7 @@ class ContactController extends AbstractController
         return $this->APISerializer->response($data);
     }
 
-    #[Route('/contact/{id}', requirements: ['id' => '\d+'], name:'get_one_by_id', methods: 'GET')]
+    #[Route('/contact/{id}', requirements: ['id' => '\d+'], name: 'get_one_contact_by_id', methods: 'GET')]
     public function getOneContact(int $id)
     {
         $contact = $this->contactRepository->find($id);
@@ -46,9 +49,27 @@ class ContactController extends AbstractController
         return $this->APISerializer->response($data);
     }
 
-    #[Route('/contact', name:'create_new', methods: 'POST')]
-    public function createNewContact()
+    #[Route('/contact', name: 'create_new_contact', methods: 'POST')]
+    public function createNewContact(Request $request, CleanData $cleanData, EntityManagerInterface $entityManager): Response
     {
         
+            $contact = New Contact();
+
+            $data = json_decode($request->getContent());
+            $dataIsClean = $cleanData->cleanData($data);
+
+            $contact->setFirstname($dataIsClean['firstname']);
+            $contact->setLastname($dataIsClean['lastname']);
+            $contact->setAdress($dataIsClean['adress']);
+            $contact->setPhone($dataIsClean['phone']);
+            $contact->setMail($dataIsClean['mail']);
+            $contact->setAge($dataIsClean['age']);
+
+            $entityManager->persist($contact);
+            $entityManager->flush();
+
+            return new Response('Your new contact has been added', 201);
+        
+        return new Response('An error has been occured', 404);
     }
 }
