@@ -125,4 +125,16 @@ class Contact
 
         return $this;
     }
+
+    public function toArray()
+    {
+        return [
+            'id' => $this->getId(),
+            'firstname' => $this->getFirstName(),
+            'lastname' => $this->getLastName(),
+            'adress' => $this->getAdress(),
+            'mail' => $this->getMail(),
+            'phone' => $this->getPhone()
+        ];
+    }
 }

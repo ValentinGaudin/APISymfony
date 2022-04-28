@@ -47,14 +47,6 @@ class ContactRepository extends ServiceEntityRepository
         }
     }
 
-    /**
-     * @throws ORMException
-     * @throws OptimisticLockException
-     */
-
-
-
-
     // /**
     //  * @return Contact[] Returns an array of Contact objects
     //  */
@@ -87,14 +79,26 @@ class ContactRepository extends ServiceEntityRepository
     // /**
     //  * @return Contact[] Returns an array of Contact objects
     //  */
-
-    public function apiFindAll(): Array
+    public function apiFindAll(): array
     {
         return $this->createQueryBuilder('c')
             ->select('c.firstname', 'c.lastname', 'c.age', 'c.mail', 'c.adress', 'c.phone')
             ->orderBy('c.lastname', 'ASC')
             ->getQuery()
-            ->getResult()
-            ;
+            ->getResult();
+    }
+
+    public function removeCustomer(Contact $contact)
+    {
+        $this->_em->remove($contact);
+        $this->_em->flush();
+    }
+
+    public function updateContact(Contact $contact): Contact
+    {
+        $this->_em->persist($contact);
+        $this->_em->flush();
+
+        return $contact;
     }
 }
