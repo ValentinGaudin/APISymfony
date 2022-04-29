@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Contact;
 use App\Repository\ContactRepository;
+use App\Service\ApiSerializer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -12,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Persistence\ManagerRegistry as PersistenceManagerRegistry;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api', name: 'api_')]
 class ContactController extends AbstractController
@@ -20,10 +22,12 @@ class ContactController extends AbstractController
         ContactRepository $contactRepository,
         EntityManagerInterface $entityManager,
         PersistenceManagerRegistry $doctrine,
+        DataMethod $dataMethod
     ) {
         $this->contactRepository = $contactRepository;
         $this->entityManager = $entityManager;
         $this->doctrine = $doctrine;
+        $this->dataMethod = $dataMethod;
     }
 
     #[Route('/', name: 'index', methods: 'GET')]
@@ -38,7 +42,6 @@ class ContactController extends AbstractController
     public function getAllContacts(): JsonResponse
     {
         $contacts = $this->contactRepository->apiFindAll();
-
         return new JsonResponse($contacts, Response::HTTP_OK);
     }
 
@@ -66,20 +69,39 @@ class ContactController extends AbstractController
     #[Route('/contact', name: 'create_new_contact', methods: 'POST')]
     public function createNewContact(
         Request $request,
-        DataMethod $dataMethod,
+        ValidatorInterface $validator,
     ): JsonResponse {
         $contact = new Contact();
 
-        $informations = $dataMethod->getData($request);
-        $dataIsClean = $dataMethod->cleanData($informations);
+        $informations = $this->dataMethod->getDataFromRequest($request);
+        $dataIsClean = $this->dataMethod->cleanData($informations);
+        $contact = $this->dataMethod->hydrate($dataIsClean, $contact);
 
-        $contact->setFirstname($dataIsClean['firstname']);
-        $contact->setLastname($dataIsClean['lastname']);
-        $contact->setAdress($dataIsClean['adress']);
-        $contact->setPhone($dataIsClean['phone']);
-        $contact->setMail($dataIsClean['mail']);
-        $contact->setAge($dataIsClean['age']);
+        $searchDuplicateContact = $this->contactRepository->findOneBy([
+            'mail' => $dataIsClean['mail'],
+            'firstname' => $dataIsClean['firstname'],
+            'lastname' => $dataIsClean['lastname'],
+        ]);
 
+        if ($searchDuplicateContact !== null) {
+            $data = [
+                'id' => $searchDuplicateContact->getId(),
+                'firstName' => $searchDuplicateContact->getFirstname(),
+                'lastName' => $searchDuplicateContact->getLastname(),
+                'email' => $searchDuplicateContact->getMail(),
+                'adress' => $searchDuplicateContact->getAdress(),
+                'phone' => $searchDuplicateContact->getPhone(),
+                'age' => $searchDuplicateContact->getAge(),
+            ];
+            return new JsonResponse([
+                'status' => 'Contact is already created!',
+                'contact' => $data
+            ], Response::HTTP_NOT_FOUND);
+        }
+        $errors = $validator->validate($contact);
+        if (count($errors) > 0) {
+            return new JsonResponse((string) $errors, 400);
+        }
         $entityManager = $this->doctrine->getManager();
         $entityManager->persist($contact);
         $entityManager->flush();
@@ -90,12 +112,11 @@ class ContactController extends AbstractController
     #[Route('/contact/{id}', requirements: ['id' => '\d+'], name: 'update_contact_by_id', methods: 'PUT')]
     public function editOneContact(
         Request $request,
-        DataMethod $dataMethod,
         int $id
     ): JsonResponse {
         $contact = $this->contactRepository->findOneBy(['id' => $id]);
         if ($contact !== null) {
-            $data = $dataMethod->getData($request);
+            $data = $this->dataMethod->getDataFromRequest($request);
 
             empty($data['firstname']) ? true : $contact->setFirstName($data['firstname']);
             empty($data['lastname']) ? true : $contact->setLastName($data['lastname']);
@@ -105,7 +126,8 @@ class ContactController extends AbstractController
             empty($data['phone']) ? true : $contact->setPhone($data['phone']);
 
             $updatedContact = $this->contactRepository->updateContact($contact);
-            return new JsonResponse($updatedContact->toArray(), Response::HTTP_OK);
+            return new JsonResponse([
+                'Contact Updated' => $updatedContact->toArray()], Response::HTTP_OK);
         }
         return new JsonResponse("This contact doesn't exist", Response::HTTP_NOT_FOUND);
     }

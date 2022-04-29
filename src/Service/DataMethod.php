@@ -10,11 +10,10 @@ class DataMethod
     {
         $data = array_map('trim', $data);
         $data = array_map('stripslashes', $data);
-
         return $data;
     }
 
-    public function getData(Request $request): array
+    public function getDataFromRequest(Request $request): array
     {
         $data = [];
 
@@ -25,17 +24,14 @@ class DataMethod
         return $data;
     }
 
-    public function hydrate(array $data)
+    public function hydrate(array $data, Object $class)
     {
         foreach ($data as $key => $value) {
-            // On récupère le nom du setter correspondant à l'attribut
             $method = 'set' . ucfirst($key);
-
-            // Si le setter correspondant existe.
-            if (method_exists($this, $method)) {
-                // On appelle le setter
-                $this->$method($value);
+            if (method_exists($class, $method)) {
+                $class->$method($value);
             }
         }
+        return $class;
     }
 }

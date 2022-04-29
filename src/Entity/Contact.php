@@ -5,49 +5,49 @@ namespace App\Entity;
 use App\Repository\ContactRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
+#[UniqueEntity('mail')]
 class Contact
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    #[Assert\NotBlank]
-    private $id;
+    private int $id;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3)]
-    private $lastname;
+    private string $lastname;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    private $firstname;
+    private string $firstname;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(name: 'mail', type: 'string', length: 255, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    #[Assert\Unique]
     #[Assert\Email(
         message: 'The email {{ value }} is not a valid email.',
     )]
-    private $mail;
+    private string $mail;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    private $adress;
+    private string $adress;
 
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 255)]
-    private $phone;
+    private string $phone;
 
     #[ORM\Column(type: 'integer')]
     #[Assert\NotBlank]
-    #[Assert\Length(min: 10, max: 255)]
-    private $age;
+    #[Assert\Length(min: 1, max: 255)]
+    private int $age;
 
     public function getId(): ?int
     {
