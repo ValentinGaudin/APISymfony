@@ -17,3 +17,5 @@
 
 # Thumbnails
 ._*
+
+/.docker/
