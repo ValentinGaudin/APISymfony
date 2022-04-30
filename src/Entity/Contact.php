@@ -4,32 +4,50 @@ namespace App\Entity;
 
 use App\Repository\ContactRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
+#[UniqueEntity('mail')]
 class Contact
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private int $id;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private $lastname;
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3)]
+    private string $lastname;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private $firstname;
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3, max: 255)]
+    private string $firstname;
+
+    #[ORM\Column(name: 'mail', type: 'string', length: 255, unique: true)]
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3, max: 255)]
+    #[Assert\Email(
+        message: 'The email {{ value }} is not a valid email.',
+    )]
+    private string $mail;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private $mail;
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3, max: 255)]
+    private string $adress;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private $adress;
-
-    #[ORM\Column(type: 'string', length: 255)]
-    private $phone;
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 3, max: 255)]
+    private string $phone;
 
     #[ORM\Column(type: 'integer')]
-    private $age;
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 1, max: 255)]
+    private int $age;
 
     public function getId(): ?int
     {
@@ -106,5 +124,17 @@ class Contact
         $this->age = $age;
 
         return $this;
+    }
+
+    public function toArray()
+    {
+        return [
+            'id' => $this->getId(),
+            'firstname' => $this->getFirstName(),
+            'lastname' => $this->getLastName(),
+            'adress' => $this->getAdress(),
+            'mail' => $this->getMail(),
+            'phone' => $this->getPhone()
+        ];
     }
 }
